@@ -1,0 +1,70 @@
+{
+    // a row that doesn't match any rule doesn't create a match
+    "0": [
+        {
+            "username": "abdalla",
+            "is_accepted": true
+        }
+    ],
+    // (valid) violation creates a match with sev level = 1
+    "1": [
+        {
+            "username": "abdalla",
+            "is_accepted": false
+        }
+    ],
+    // (invalid) violation before DDT passed, doesn't create a match
+    "2": [
+        {
+            "username": "abdalla",
+            "is_accepted": false
+        }
+    ],
+    // (valid) violation (DDT passed), moves to sev level = 2
+    "3": [
+        {
+            "username": "abdalla",
+            "is_accepted": false
+        }
+    ],
+    "4": [],
+    // (valid) violation (DDT passed), moves to sev level = 3
+    "5": [
+        {
+            "username": "abdalla",
+            "is_accepted": false
+        }
+    ],
+    "6": [],
+    // (valid) violation (DDT passed), moves to sev level = 4
+    "7": [
+        {
+            "username": "abdalla",
+            "is_accepted": false
+        }
+    ],
+    "8": [],
+    // (valid) violation (DDT passed), re-applies sev level = 4
+    "9": [
+        {
+            "username": "abdalla",
+            "is_accepted": false
+        }
+    ],
+    "10": [],
+    "11": [],
+    "12": [],
+    "13": [],
+    "14": [],
+    "15": [],
+    "16": [],
+    "17": [],
+    "18": [],
+    // (valid) violation (DDT passed) (exp_period passed), re-init sev level = 1
+    "19": [
+        {
+            "username": "abdalla",
+            "is_accepted": false
+        }
+    ]
+}
