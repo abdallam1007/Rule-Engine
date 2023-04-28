@@ -3,7 +3,7 @@
     "sql_query": "SELECT * FROM drivers_order_response WHERE is_accepted=False",
     "crone": 5,
     "DDT": 7,
-    "db_connection_str": "database=dry_run_db user=postgres password=password host=127.0.0.1 port=5432",
+    "db_connection_str": "dbname=dry_run_db user=postgres password=password host=127.0.0.1 port=5432",
     "severity_configs": {
         "activate_severities": true,
         "re_apply": true,
