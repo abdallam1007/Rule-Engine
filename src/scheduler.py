@@ -2,6 +2,7 @@ import time
 from apscheduler.schedulers.background import BackgroundScheduler
 
 import rule_engine
+import database_engine
 
 def schedule_rule(scheduler, mongo_db, rule):
     # Parse the cron to extract hours, minutes and seconds
@@ -20,6 +21,7 @@ def init_scheduler(mongo_db, rules):
 
     # Create a job for each rule
     for rule in rules:
+        database_engine.insert_new_updates(rule)
         schedule_rule(scheduler, mongo_db, rule)
 
     scheduler.start()
