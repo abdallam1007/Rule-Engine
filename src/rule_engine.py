@@ -1,5 +1,8 @@
 import json
 
+import database_engine
+
+
 # create the rules documents from json and add them to the Rules collection
 def create_rules(mongo_db, rules_fp):
     f = open(rules_fp, 'r')
@@ -19,18 +22,17 @@ def create_rules(mongo_db, rules_fp):
     
     return rules_objs
 
-# apply the sql query on the postgresSQL database and return the matches
+# applies the rule
 def apply_rule(mongo_db, rule):
-    #user_db.execute(sql_query)
-    #matches = user_db.fetchall()
+    conn = database_engine.connect_database(rule)
+    user_db = conn.cursor()
+    
+    sql_query = rule["sql_query"]
+    user_db.execute(sql_query)
+    rows = user_db.fetchall()
 
-
-    # Todo:
-    # - connect to the user_db and apply the rule to get the "matches"
-    # - call the fuction process_rule_matches_by_row
-    # - call the update_database function with the rule
-    #   - update_database modifies round in python_obj/db_obj rule
-    pass
+    process_rule_matches_by_row(mongo_db, rows, rule)
+    database_engine.update_database(rule)
 
 def process_rule_matches_by_row(mongo_db, rows, rule): # version of proces_rule_matches
     # Todo:

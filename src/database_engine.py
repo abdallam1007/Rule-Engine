@@ -60,5 +60,6 @@ def insert_new_updates(rule):
 
 
 def update_database(rule):
+    rule["round"] += 1
     delete_all_rows(rule)
     insert_new_updates(rule)
