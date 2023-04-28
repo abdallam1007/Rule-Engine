@@ -1,0 +1,42 @@
+[
+    {
+        "rule_name": "driver_decline_order",
+        "sql_query": "SELECT * FROM drivers_order_response WHERE is_accepted=False",
+        "cron": 5,
+        "DDT": 10,
+        "updates_fp": "data/updates_DDO.json",
+        "db_connection_str": "dbname=dry_run_db user=postgres password=password host=127.0.0.1 port=5432",
+        "severity_configs": {
+            "activate_severities": true,
+            "re_apply": true,
+            "severities": [
+                {
+                    "actions": [
+                        "Temporary Block for 30 mins!!!"
+                    ],
+                    "exp_period": 50
+                },
+                {
+                    "actions": [
+                        "Temporary Block for 1 hour!!!"
+                    ],
+                    "exp_period": 50
+                },
+                {
+                    "actions": [
+                        "Temporary Block for 4 hours!!!"
+                    ],
+                    "exp_period": 50
+                },
+                {
+                    "actions": [
+                        "Temporary Block for 1 day!!!"
+                    ],
+                    "exp_period": 50
+                }
+            ]
+        },
+        "apply_on": 0,
+        "condition": null
+    }
+]

@@ -1,24 +1,35 @@
 import json
 
-# create the rule document from json and add it to the Rules collection
-def create_rule(mongo_db, rule_filepath):
-    f = open(rule_filepath, 'r')
-    rule = json.load(f)
+# create the rules documents from json and add them to the Rules collection
+def create_rules(mongo_db, rules_fp):
+    f = open(rules_fp, 'r')
+    rules_json = json.load(f)
     f.close()
 
     rules_collection = mongo_db['Rules']
-    insert_res = rules_collection.insert_one(rule)
-
-    # Retrieve the inserted document
-    rule_obj = rules_collection.find_one({"_id": insert_res.inserted_id})
-    return rule_obj
+    rules_objs = []
+    
+    for rule in rules_json:
+        # insert rule in the collection
+        inserted_rule = rules_collection.insert_one(rule)
+        
+        # Retrieve the inserted document
+        rule_obj = rules_collection.find_one({"_id": inserted_rule.inserted_id})
+        rules_objs.append(rule_obj)
+    
+    return rules_objs
 
 # apply the sql query on the postgresSQL database and return the matches
-def apply_rule_on_database(user_db, sql_query):
+def apply_rule(mongo_db, rule):
     #user_db.execute(sql_query)
     #matches = user_db.fetchall()
 
-    #return matches
+
+    # Todo:
+    # - connect to the user_db and apply the rule to get the "matches"
+    # - call the fuction process_rule_matches_by_row
+    # - call the update_database function with the rule
+    #   - update_database modifies round in python_obj/db_obj rule
     pass
 
 def process_rule_matches_by_row(mongo_db, rows, rule): # version of proces_rule_matches
