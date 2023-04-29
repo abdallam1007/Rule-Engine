@@ -2,8 +2,8 @@
     {
         "rule_name": "driver_decline_order",
         "sql_query": "SELECT * FROM drivers_order_response WHERE is_accepted=False",
-        "cron": "0 0 5",
-        "DDT": 10,
+        "cron": "0 0 4",
+        "DDT": 6,
         "updates_fp": "data/updates_DDO.json",
         "round": 0,
         "db_connection_str": "dbname=dry_run_db user=postgres password=password host=127.0.0.1 port=5432",

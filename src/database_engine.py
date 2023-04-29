@@ -47,6 +47,10 @@ def insert_new_updates(rule):
 
     # Get the updates for current round number
     round = rule["round"]
+
+    if round >= len(data):
+        return
+    
     updates = data[str(round)]
 
     # for every update, insert a corresponding database row
