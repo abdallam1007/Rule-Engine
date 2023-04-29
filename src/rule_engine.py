@@ -49,7 +49,6 @@ def update_sev_level(mongo_db, rule, row):
 
     # if there was a prev match, check if we move to the next sev level
     if last_match is not None:
-        print("There was a previous match")
         curr_sev_level = last_match["sev_level"]
         sev = rule["severity_configs"]["severities"][curr_sev_level]
         sev_exp_period = sev["exp_period"]
@@ -61,7 +60,6 @@ def update_sev_level(mongo_db, rule, row):
 
         # if the prev match didn't expire, move to the next level
         if curr_timestamp < expiry_timestamp:
-            print("The expiration period didn't expire")
             return curr_sev_level + 1
     
     # if there is no prev match, either they expired or this is the first
@@ -101,12 +99,8 @@ def apply_rule(mongo_db, rule):
     sql_query = rule["sql_query"]
     user_db.execute(sql_query)
     rows = user_db.fetchall()
-
-    print("-----------------------------------")
-    print("Matched [" + str(len(rows)) + "] rows")
     
     process_rule_matches_by_row(mongo_db, rule, rows)
-    print("-----------------------------------")
 
     # * The database has to be updated manually for now
     database_engine.update_database(rule)
@@ -119,24 +113,17 @@ def process_rule_matches_by_row(mongo_db, rule, rows):
 
         # check if this row should be considered to be a match
         if is_valid_match(mongo_db, rule, row):
-            print("Found a valid match")
-
             # get the new sev level based on the exp period
             new_sev_level = update_sev_level(mongo_db, rule, row)
             max_sev_level = len(rule["severity_configs"]["severities"]) - 1
 
             # if the user matched again while being in the max sev level
             if new_sev_level > max_sev_level:
-                print("Reached Final sev_level again")
                 if not rule["severity_configs"]["re_apply"]:
-                    print("No need to re_apply the rule")
                     return
 
                 # keep sev level on max to re apply
-                print("Need to re_apply the rule")
                 new_sev_level = max_sev_level
-               
-            print("curr_sev_level is = " + str(new_sev_level))
             
             # create a match in the database
             create_match(mongo_db, rule, row, new_sev_level)
@@ -198,8 +185,13 @@ def apply_actions(rule, sev_level):
 
     # get the actions to perform from the severity
     sev = rule["severity_configs"]["severities"][sev_level]
+    rule_name = rule["rule_name"]
 
     # Todo: create API calls to perform the actions
     # print all the actions
     for action in sev["actions"]:
-        print("Perform Action ==> " + action)
+        print("-------------------------------")
+        print("Update from Rule:", rule_name)
+        print("Current Severity Level = ", sev_level)
+        print("Action =>", action)
+        print("-------------------------------")
