@@ -6,19 +6,29 @@ import database_engine
 
 #----------------------- HELPER FUNCTIONS -----------------------#
 
-def get_last_match(mongo_db, row):
+# Todo: filter by (username,rule) instead of just username
+def get_last_match(mongo_db, rule, row):
+
     matches_collection = mongo_db["Matches"]
     username = row[1]
 
-    last_match = matches_collection.find_one({ 'username': username },
-                                sort=[('_id', -1)])
-    
+    # get the last match added for this user with this rule
+    last_match = matches_collection.find_one({
+        'username': username,
+        'rule_id': rule["_id"]
+    }, sort=[('_id', -1)])
+
     return last_match
 
+
+# check if a match is valid by making sure the DDT time from
+# a previous match has passed
 def is_valid_match(mongo_db, rule, row):
-    last_match = get_last_match(mongo_db, row)
+
+    last_match = get_last_match(mongo_db, rule, row)
+
+    # if there was a match before this, then maybe the DDT didn't pass
     if last_match is not None:
-        # check the DDT
         DDT = rule["DDT"]
         last_match_timestamp = last_match["timestamp"]
         curr_timestamp = datetime.utcnow()
@@ -27,10 +37,17 @@ def is_valid_match(mongo_db, rule, row):
         delta_secs = delta.total_seconds()
         return delta_secs >= DDT
     
+    # if it's the first or only match, then it is valid
     return True
 
+
+# update the sev_level based on if the previous severity
+# expired or not yet
 def update_sev_level(mongo_db, rule, row):
-    last_match = get_last_match(mongo_db, row)
+
+    last_match = get_last_match(mongo_db, rule, row)
+
+    # if there was a prev match, check if we move to the next sev level
     if last_match is not None:
         print("There was a previous match")
         curr_sev_level = last_match["sev_level"]
@@ -42,17 +59,20 @@ def update_sev_level(mongo_db, rule, row):
 
         expiry_timestamp = last_match_timestamp + timedelta(seconds=sev_exp_period)
 
+        # if the prev match didn't expire, move to the next level
         if curr_timestamp < expiry_timestamp:
             print("The expiration period didn't expire")
-            #  didn't expire
             return curr_sev_level + 1
-        
-    return 0 # exp passed or it is the first match
+    
+    # if there is no prev match, either they expired or this is the first
+    return 0
 
 #----------------------------------------------------------------#
 
 # create the rules documents from json and add them to the Rules collection
 def create_rules(mongo_db, rules_fp):
+
+    # read the rules into a python list from json
     f = open(rules_fp, 'r')
     rules_json = json.load(f)
     f.close()
@@ -70,11 +90,14 @@ def create_rules(mongo_db, rules_fp):
     
     return rules_objs
 
-# applies the rule
+
 def apply_rule(mongo_db, rule):
+
+    # connect to the user database
     conn = database_engine.connect_database(rule)
     user_db = conn.cursor()
     
+    # apply the sql query
     sql_query = rule["sql_query"]
     user_db.execute(sql_query)
     rows = user_db.fetchall()
@@ -84,21 +107,32 @@ def apply_rule(mongo_db, rule):
     
     process_rule_matches_by_row(mongo_db, rule, rows)
     print("-----------------------------------")
+
+    # * The database has to be updated manually for now
     database_engine.update_database(rule)
 
-# version of proces_rule_matches
+
 def process_rule_matches_by_row(mongo_db, rule, rows):
+
+    #process the rows one by one as apply_on indicated
     for row in rows:
+
+        # check if this row should be considered to be a match
         if is_valid_match(mongo_db, rule, row):
             print("Found a valid match")
+
+            # get the new sev level based on the exp period
             new_sev_level = update_sev_level(mongo_db, rule, row)
             max_sev_level = len(rule["severity_configs"]["severities"]) - 1
+
+            # if the user matched again while being in the max sev level
             if new_sev_level > max_sev_level:
                 print("Reached Final sev_level again")
                 if not rule["severity_configs"]["re_apply"]:
                     print("No need to re_apply the rule")
                     return
 
+                # keep sev level on max to re apply
                 print("Need to re_apply the rule")
                 new_sev_level = max_sev_level
                
@@ -107,33 +141,50 @@ def process_rule_matches_by_row(mongo_db, rule, rows):
             # create a match in the database
             create_match(mongo_db, rule, row, new_sev_level)
             
-            # log and apply the actions
+            # log the action and apply it
             log_actions(mongo_db, rule, row, new_sev_level)
             apply_actions(rule, new_sev_level)
 
+
 def create_match(mongo_db, rule, row, sev_level):
+
     sev = rule["severity_configs"]["severities"][sev_level]
     sev_exp_period = sev["exp_period"]
 
+    # create a match object
     match = {
-        # * user_id at 0
-        "username": row[1], # ! hardcoded for readability
+        # * username here is supposed to be user_id, it is currently like this
+        # * for readability purpoces.
+        # * Howerver, for production this is changed to be user_id
+
+        # * We enforce that each row returned by the database
+        # * has to have user_id as the first column
+        "username": row[1],
         "timestamp": datetime.utcnow(),
         "sev_level": sev_level,
-        "rule": rule
+        "rule_id": rule["_id"]
     }
 
     matches_collection = mongo_db["Matches"]
+    
+    # create an index on the timestamp to be the base for the TTL on the document
     matches_collection.create_index("timestamp",
                         expireAfterSeconds=sev_exp_period)
     matches_collection.insert_one(match)
 
+
 def log_actions(mongo_db, rule, row, sev_level):
+    
     sev = rule["severity_configs"]["severities"][sev_level]
 
     action_log = {
-        # * user_id at 0
-        "username": row[1], # ! hardcoded for readability
+        # * username here is supposed to be user_id, it is currently like this
+        # * for readability purpoces.
+        # * Howerver, for production this is changed to be user_id
+
+        # * We enforce that each row returned by the database
+        # * has to have user_id as the first column
+        "username": row[1],
         "timestamp": datetime.utcnow(),
         "severity_level": sev_level,
         "severity": sev,
@@ -144,19 +195,11 @@ def log_actions(mongo_db, rule, row, sev_level):
     action_logs_collection.insert_one(action_log)
 
 def apply_actions(rule, sev_level):
+
+    # get the actions to perform from the severity
     sev = rule["severity_configs"]["severities"][sev_level]
+
+    # Todo: create API calls to perform the actions
+    # print all the actions
     for action in sev["actions"]:
         print("Perform Action ==> " + action)
-
-# ! <<<<    CAN'T DO THIS    >>>> !
-# there is no user id, therefore there is no way to create a match
-# therefore, there is no way to implement DDT or severity levels
-
-'''
-def process_rule_matches_by_condition(row, rule): # version of proces_rule_matches
-    # Todo:
-    # - take the value and apply condition
-    # - if true, update sev levels and take actions
-
-    pass
-'''
