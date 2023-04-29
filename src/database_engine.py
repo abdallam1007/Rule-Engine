@@ -1,7 +1,6 @@
 import json
 import psycopg2
 
-table = "drivers_order_response" # ! hardcoded for now
 
 # * Note: using a smartEnum when supporting multiple database types, this function will be different
 def connect_database(rule):
@@ -22,13 +21,14 @@ def delete_all_rows(rule):
     conn = connect_database(rule)
     user_db = conn.cursor()
 
+    table = rule["table_name"]
     sql = f"DELETE FROM {table}"
     user_db.execute(sql)
 
     close_database(conn, user_db)
 
 # creates a sql query based on json data structure for a row
-def construct_query(update):
+def construct_query(update, table):
     columns = ", ".join(update.keys())
     value_placeholders = ", ".join(["%s"] * len(update))
 
@@ -52,11 +52,12 @@ def insert_new_updates(rule):
         return
     
     updates = data[str(round)]
+    table = rule["table_name"]
 
     # for every update, insert a corresponding database row
     for update in updates:
         # construct sql query to insert row in postgres db
-        query = construct_query(update)
+        query = construct_query(update, table)
         row_data = tuple(update.values())
         user_db.execute(query, row_data)
 

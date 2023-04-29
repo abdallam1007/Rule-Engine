@@ -39,5 +39,47 @@
         },
         "apply_on": 0,
         "condition": null
+    },
+    {
+        "rule_name": "merchant_decline_order",
+        "sql_query": "SELECT * FROM merchants_order_response WHERE is_accepted=False",
+        "cron": "0 0 4",
+        "DDT": 6,
+        "table_name": "merchants_order_response",
+        "updates_fp": "data/updates_MDO.json",
+        "round": 0,
+        "db_connection_str": "dbname=dry_run_db user=postgres password=password host=127.0.0.1 port=5432",
+        "severity_configs": {
+            "activate_severities": true,
+            "re_apply": true,
+            "severities": [
+                {
+                    "actions": [
+                        "Warning!!!"
+                    ],
+                    "exp_period": 50
+                },
+                {
+                    "actions": [
+                        "Temporary Block for 30 mins!!!"
+                    ],
+                    "exp_period": 50
+                },
+                {
+                    "actions": [
+                        "Temporary Block for 4 hours!!!"
+                    ],
+                    "exp_period": 50
+                },
+                {
+                    "actions": [
+                        "Temporary Block for 1 day!!!"
+                    ],
+                    "exp_period": 50
+                }
+            ]
+        },
+        "apply_on": 0,
+        "condition": null
     }
 ]
