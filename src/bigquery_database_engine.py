@@ -16,11 +16,8 @@ a real live database to this code
 def connect_database(rule):
 
     # establishing a connection with the database
-    client = bigquery.Client()
-
     project_id = rule["db_project_id"]
-    dataset_id = rule["dataset_id"]
-    client.dataset(dataset_id, project=project_id)
+    client = bigquery.Client(project=project_id)
 
     return client
 
@@ -39,7 +36,9 @@ def delete_all_rows(rule):
 
     # delete all the rows from the database
     table_name = rule["table_name"]
-    table_ref = user_db.table(table_name)
+    dataset_id = rule["dataset_id"]
+
+    table_ref = user_db.dataset(dataset_id).table(table_name)
     user_db.delete_rows(table_ref, "TRUE")
 
     close_database(user_db)
@@ -61,14 +60,17 @@ def insert_new_updates(rule):
     if round >= len(data):
         return
 
+    dataset_id = rule["dataset_id"]
     table_name = rule["table_name"]
-    table_ref = user_db.table(table_name)
+    table_ref = user_db.dataset(dataset_id).table(table_name)
+    table = user_db.get_table(table_ref)
+    schema = table.schema
 
     # get the updates to be inserted in the database for a specific round
     updates = data[round]
     # for every update, insert a corresponding database row
-    user_db.insert_rows(table_ref, rows=updates)
-
+    #user_db.insert_rows(table_ref, rows=updates)
+    user_db.insert_rows_json(table_ref, json_rows=updates)
     close_database(user_db)
 
 

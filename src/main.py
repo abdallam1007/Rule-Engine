@@ -9,7 +9,7 @@ def main():
     
     # parser for the arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-rfp', default= "data/rules.json", type= str, help='path to def of rules in json format')
+    parser.add_argument('-rfp', default= "data/bigquery_rules.json", type= str, help='path to def of rules in json format')
     args = parser.parse_args()
 
     # connect to the mongo database used for running the code

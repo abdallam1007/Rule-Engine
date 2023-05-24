@@ -2,7 +2,7 @@ import time
 from apscheduler.schedulers.background import BackgroundScheduler
 
 import rule_engine
-import database_engine
+import bigquery_database_engine
 
 
 def schedule_rule(scheduler, mongo_db, rule):
@@ -28,7 +28,7 @@ def init_scheduler(mongo_db, rules):
         # * since this is just a dummy database and not a fully
         # * integrated one, we have to put some updates in the database
         # * before actually running the rule
-        database_engine.insert_new_updates(rule)
+        bigquery_database_engine.insert_new_updates(rule)
 
         # Create a job on the scheduler for the rule
         schedule_rule(scheduler, mongo_db, rule)

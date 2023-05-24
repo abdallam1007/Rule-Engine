@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timedelta
 
-import postgres_database_engine
+import bigquery_database_engine
 
 
 #----------------------- HELPER FUNCTIONS -----------------------#
@@ -9,7 +9,7 @@ import postgres_database_engine
 def get_last_match(mongo_db, rule, row):
 
     matches_collection = mongo_db["Matches"]
-    username = row[1]
+    username = row["username"]
 
     # get the last match added for this user with this rule
     last_match = matches_collection.find_one({
@@ -91,18 +91,17 @@ def create_rules(mongo_db, rules_fp):
 def apply_rule(mongo_db, rule):
 
     # connect to the user database
-    conn = database_engine.connect_database(rule)
-    user_db = conn.cursor()
+    user_db = bigquery_database_engine.connect_database(rule)
     
     # apply the sql query
     sql_query = rule["sql_query"]
     user_db.execute(sql_query)
-    rows = user_db.fetchall()
+    rows = user_db.query(sql_query).result()
     
     process_rule_matches_by_row(mongo_db, rule, rows)
 
     # * The database has to be updated manually for now
-    database_engine.update_database(rule)
+    bigquery_database_engine.update_database(rule)
 
 
 def process_rule_matches_by_row(mongo_db, rule, rows):
@@ -129,7 +128,7 @@ def process_rule_matches_by_row(mongo_db, rule, rows):
             
             # log the action and apply it
             log_actions(mongo_db, rule, row, new_sev_level)
-            apply_actions(rule, new_sev_level)
+            apply_actions(rule, new_sev_level) # TODO this will take the row from now on so we can do an action on the id
 
 
 def create_match(mongo_db, rule, row, sev_level):
@@ -145,7 +144,7 @@ def create_match(mongo_db, rule, row, sev_level):
 
         # * We enforce that each row returned by the database
         # * has to have user_id as the first column
-        "username": row[1],
+        "username": row["username"],
         "timestamp": datetime.utcnow(),
         "sev_level": sev_level,
         "rule_id": rule["_id"]
@@ -170,7 +169,7 @@ def log_actions(mongo_db, rule, row, sev_level):
 
         # * We enforce that each row returned by the database
         # * has to have user_id as the first column
-        "username": row[1],
+        "username": row["username"],
         "timestamp": datetime.utcnow(),
         "severity_level": sev_level,
         "severity": sev,
