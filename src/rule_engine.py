@@ -1,12 +1,11 @@
 import json
 from datetime import datetime, timedelta
 
-import database_engine
+import postgres_database_engine
 
 
 #----------------------- HELPER FUNCTIONS -----------------------#
 
-# Todo: filter by (username,rule) instead of just username
 def get_last_match(mongo_db, rule, row):
 
     matches_collection = mongo_db["Matches"]
@@ -180,6 +179,7 @@ def log_actions(mongo_db, rule, row, sev_level):
 
     action_logs_collection = mongo_db["Action Logs"]
     action_logs_collection.insert_one(action_log)
+
 
 def apply_actions(rule, sev_level):
 

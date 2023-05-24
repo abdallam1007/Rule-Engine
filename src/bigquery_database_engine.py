@@ -1,5 +1,5 @@
 import json
-import psycopg2
+from google.cloud import bigquery
 
 # * IMPORTANT NOTE
 '''
@@ -16,54 +16,41 @@ a real live database to this code
 def connect_database(rule):
 
     # establishing a connection with the database
-    db_connection_str = rule["db_connection_str"]
-    conn = psycopg2.connect(db_connection_str)
+    client = bigquery.Client()
 
-    # enable auto commiting of the changes
-    conn.autocommit = True
+    project_id = rule["db_project_id"]
+    dataset_id = rule["dataset_id"]
+    client.dataset(dataset_id, project=project_id)
 
-    return conn
+    return client
 
 
-def close_database(conn, user_db):
-    
+def close_database(user_db):
+
     # close the connection with the database
     user_db.close()
-    conn.close()
 
-
-def construct_query(update, table):
-
-    # creates a sql query based on json data structure for a row
-    columns = ", ".join(update.keys())
-    value_placeholders = ", ".join(["%s"] * len(update))
-
-    query = f"INSERT INTO {table} ({columns}) VALUES ({value_placeholders})"
-    return query
 
 #----------------------------------------------------------------#
 
 def delete_all_rows(rule):
 
-    conn = connect_database(rule)
-    user_db = conn.cursor()
+    user_db = connect_database(rule)
 
     # delete all the rows from the database
-    table = rule["table_name"]
-    sql = f"DELETE FROM {table}"
-    user_db.execute(sql)
+    table_name = rule["table_name"]
+    table_ref = user_db.table(table_name)
+    user_db.delete_rows(table_ref, "TRUE")
 
-    close_database(conn, user_db)
+    close_database(user_db)
 
 
 def insert_new_updates(rule):
 
-    conn = connect_database(rule)
-    user_db = conn.cursor()
+    user_db = connect_database(rule)
 
     # unpack the rule to get the needed information
     updates_fp = rule["updates_fp"]
-    table = rule["table_name"]
     round = rule["round"]
 
     # read the json file in a python dictionary
@@ -74,17 +61,15 @@ def insert_new_updates(rule):
     if round >= len(data):
         return
 
+    table_name = rule["table_name"]
+    table_ref = user_db.table(table_name)
+
     # get the updates to be inserted in the database for a specific round
-    updates = data[str(round)]
-
+    updates = data[round]
     # for every update, insert a corresponding database row
-    for update in updates:
-        # construct sql query to insert row in postgres db
-        query = construct_query(update, table)
-        row_data = tuple(update.values())
-        user_db.execute(query, row_data)
+    user_db.insert_rows(table_ref, rows=updates)
 
-    close_database(conn, user_db)
+    close_database(user_db)
 
 
 def update_database(rule):

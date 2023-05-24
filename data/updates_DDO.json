@@ -1,68 +1,68 @@
-{
-    "0": [
+[
+    [
         {
             "username": "abdalla",
             "is_accepted": true
         }
     ],
-    "1": [
+    [
         {
             "username": "abdalla",
             "is_accepted": false
         }
     ],
-    "2": [
+    [
         {
             "username": "abdalla",
             "is_accepted": false
         }
     ],
-    "3": [
+    [
         {
             "username": "abdalla",
             "is_accepted": false
         }
     ],
-    "4": [],
-    "5": [
+    [],
+    [
         {
             "username": "abdalla",
             "is_accepted": false
         }
     ],
-    "6": [],
-    "7": [
+    [],
+    [
         {
             "username": "abdalla",
             "is_accepted": false
         }
     ],
-    "8": [],
-    "9": [
+    [],
+    [
         {
             "username": "abdalla",
             "is_accepted": false
         }
     ],
-    "10": [],
-    "11": [],
-    "12": [],
-    "13": [],
-    "14": [],
-    "15": [],
-    "16": [],
-    "17": [],
-    "18": [],
-    "19": [],
-    "20": [],
-    "21": [],
-    "22": [],
-    "23": [],
-    "24": [],
-    "25": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
         {
             "username": "abdalla",
             "is_accepted": false
         }
     ]
-}
+]
